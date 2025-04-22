@@ -1,26 +1,34 @@
-import { useState } from 'react';
+import { Typeahead } from 'react-bootstrap-typeahead';
+import 'react-bootstrap-typeahead/css/Typeahead.css';
+import './SearchBar.css'; // Import custom CSS
 
-function SearchBar({ onSearch }) {
-  const [query, setQuery] = useState('');
+function SearchBar({ onSearch, countries }) {
+  const countryNames = countries.map((country) => country.name.common);
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (query.trim()) {
-      onSearch(query.trim());
+  const handleSelect = (selected) => {
+    if (selected.length > 0) {
+      onSearch(selected[0]);
     }
   };
 
   return (
     <div className="mb-4">
-      <form onSubmit={handleSubmit}>
-        <input
-          type="text"
-          className="form-control"
-          placeholder="Search for a country..."
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-        />
-      </form>
+      <Typeahead
+        id="country-search"
+        labelKey="name"
+        options={countryNames}
+        placeholder="Search for a country..."
+        onChange={handleSelect}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') {
+            const query = e.target.value;
+            if (query.trim()) {
+              onSearch(query.trim());
+            }
+          }
+        }}
+        className="custom-search-bar" // Add custom class for styling
+      />
     </div>
   );
 }

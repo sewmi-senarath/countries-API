@@ -1,47 +1,14 @@
 import { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import axios from 'axios';
 import SearchBar from './components/searchBar';
 import FilterDropdown from './components/filterDropdown';
 import CountryDetail from './components/countryDetail';
+import Favorites from './components/Favorites';
+import MapView from './components/MapView';
+import CompareCountries from './components/CompareCountries';
+import CountryList from './components/CountryList';
 import './App.css';
-
-function CountryList({ countries, loading }) {
-  if (loading) return <p>Loading...</p>;
-  return (
-    <div className="row">
-      {countries.length === 0 ? (
-        <p>No countries found.</p>
-      ) : (
-        countries.map((country) => (
-          <div key={country.cca2} className="col-md-4 mb-3">
-            <div className="card">
-              <img
-                src={country.flags.png}
-                alt={`${country.name.common} flag`}
-                className="card-img-top"
-                style={{ height: '100px', objectFit: 'cover' }}
-              />
-              <div className="card-body">
-                <h5 className="card-title">{country.name.common}</h5>
-                <p className="card-text">
-                  <strong>Capital:</strong> {country.capital?.[0] || 'N/A'}<br />
-                  <strong>Population:</strong> {country.population.toLocaleString()}<br />
-                  <strong>Region:</strong> {country.region}<br />
-                  <strong>Languages:</strong>{' '}
-                  {Object.values(country.languages || {}).join(', ') || 'N/A'}
-                </p>
-                <a href={`/country/${country.cca2}`} className="btn btn-primary">
-                  View Details
-                </a>
-              </div>
-            </div>
-          </div>
-        ))
-      )}
-    </div>
-  );
-}
 
 function App() {
   const [countries, setCountries] = useState([]);
@@ -50,7 +17,13 @@ function App() {
   const [searchHistory, setSearchHistory] = useState(
     JSON.parse(localStorage.getItem('searchHistory')) || []
   );
+  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
+  const [favorites, setFavorites] = useState(
+    JSON.parse(localStorage.getItem('favorites')) || []
+  );
+  const [compareList, setCompareList] = useState([]);
 
+  // Fetch countries
   useEffect(() => {
     axios
       .get('https://restcountries.com/v3.1/all')
@@ -65,18 +38,46 @@ function App() {
       });
   }, []);
 
+  // Persist search history and theme
   useEffect(() => {
     localStorage.setItem('searchHistory', JSON.stringify(searchHistory));
   }, [searchHistory]);
 
+  useEffect(() => {
+    localStorage.setItem('theme', theme);
+    document.body.setAttribute('data-bs-theme', theme);
+  }, [theme]);
+
+  useEffect(() => {
+    localStorage.setItem('favorites', JSON.stringify(favorites));
+  }, [favorites]);
+
+  const toggleTheme = () => {
+    setTheme(theme === 'light' ? 'dark' : 'light');
+  };
+
+  const toggleFavorite = (country) => {
+    setFavorites((prev) =>
+      prev.some((fav) => fav.cca2 === country.cca2)
+        ? prev.filter((fav) => fav.cca2 !== country.cca2)
+        : [...prev, country]
+    );
+  };
+
+  const toggleCompare = (country) => {
+    setCompareList((prev) =>
+      prev.some((c) => c.cca2 === country.cca2)
+        ? prev.filter((c) => c.cca2 !== country.cca2)
+        : prev.length < 3 ? [...prev, country] : prev
+    );
+  };
+
   const handleSearch = (query) => {
-    // Add the final search term to history, limit to 3 most recent
     setSearchHistory((prev) => {
-      const updatedHistory = [query, ...prev.filter((item) => item !== query)]; // Remove duplicates
-      return updatedHistory.slice(0, 3); // Keep only the 3 most recent
+      const updatedHistory = [query, ...prev.filter((item) => item !== query)];
+      return updatedHistory.slice(0, 3);
     });
 
-    // Perform the search
     if (!query) {
       setFilteredCountries(countries);
       return;
@@ -126,24 +127,40 @@ function App() {
   return (
     <Router>
       <div className="container mt-4">
-        <h1>Country Explorer</h1>
+        <nav className="navbar navbar-expand-lg navbar-light mb-4">
+          <div className="container">
+            <Link className="navbar-brand eye-catching-title" to="/">Country Explorer</Link>
+            <div className="navbar-nav">
+              <Link className="nav-link" to="/">Home</Link>
+              <Link className="nav-link" to="/favorites">Favorites</Link>
+              <Link className="nav-link" to="/map">Map View</Link>
+              <button
+                onClick={toggleTheme}
+                className="btn btn-outline-secondary ms-2"
+                aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
+              >
+                {theme === 'light' ? 'Dark' : 'Light'} Mode
+              </button>
+            </div>
+          </div>
+        </nav>
         <Routes>
           <Route
             path="/"
             element={
               <>
-                <div className="row">
-                  <div className="col-md-6">
-                    <SearchBar onSearch={handleSearch} />
+                <div className="row align-items-center mb-4">
+                  <div className="col-md-8">
+                    <SearchBar onSearch={handleSearch} countries={countries} />
                   </div>
-                  <div className="col-md-6">
+                  <div className="col-md-4">
                     <FilterDropdown
                       onRegionFilter={handleRegionFilter}
                       onLanguageFilter={handleLanguageFilter}
                     />
                   </div>
                 </div>
-                <div className="mb-4">
+                <div className="mb-4 recent-searches">
                   <h5>Recent Searches:</h5>
                   <ul>
                     {searchHistory.map((search, index) => (
@@ -151,11 +168,33 @@ function App() {
                     ))}
                   </ul>
                 </div>
-                <CountryList countries={filteredCountries} loading={loading} />
+                <div className="map-section">
+                  <MapView countries={filteredCountries} />
+                </div>
+                <CompareCountries compareList={compareList} toggleCompare={toggleCompare} />
+                <CountryList
+                  countries={filteredCountries}
+                  loading={loading}
+                  favorites={favorites}
+                  toggleFavorite={toggleFavorite}
+                  compareList={compareList}
+                  toggleCompare={toggleCompare}
+                />
               </>
             }
           />
-          <Route path="/country/:code" element={<CountryDetail />} />
+          <Route
+            path="/country/:code"
+            element={<CountryDetail favorites={favorites} toggleFavorite={toggleFavorite} />}
+          />
+          <Route
+            path="/favorites"
+            element={<Favorites favorites={favorites} toggleFavorite={toggleFavorite} />}
+          />
+          <Route
+            path="/map"
+            element={<MapView countries={countries} />}
+          />
         </Routes>
       </div>
     </Router>
