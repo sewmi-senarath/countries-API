@@ -1,20 +1,44 @@
 import { useState } from 'react';
+import '../App.css';
 
-function FilterDropdown({ onRegionFilter, onLanguageFilter }) {
+function FilterDropdown({ onFiltersChange }) {
   const regions = ['All', 'Africa', 'Americas', 'Asia', 'Europe', 'Oceania'];
-  const languages = ['All', 'English', 'Spanish', 'French', 'German', 'Chinese'];
+  const languages = [
+    'All',
+    'English',
+    'Spanish',
+    'French',
+    'German',
+    'Chinese',
+    'Arabic',
+    'Hindi',
+    'Portuguese',
+    'Russian',
+    'Japanese',
+    'Tamil',
+    'Italian',
+    'Dutch',
+    'Bengali',
+    'Turkish',
+    'Vietnamese',
+    'Korean',
+    'Polish',
+    'Sinhala'
+  ];
 
   const [selectedRegion, setSelectedRegion] = useState('All');
   const [selectedLanguage, setSelectedLanguage] = useState('All');
 
   const handleRegionChange = (e) => {
-    setSelectedRegion(e.target.value);
-    onRegionFilter(e.target.value);
+    const newRegion = e.target.value;
+    setSelectedRegion(newRegion);
+    onFiltersChange({ region: newRegion, language: selectedLanguage });
   };
 
   const handleLanguageChange = (e) => {
-    setSelectedLanguage(e.target.value);
-    onLanguageFilter(e.target.value);
+    const newLanguage = e.target.value;
+    setSelectedLanguage(newLanguage);
+    onFiltersChange({ region: selectedRegion, language: newLanguage });
   };
 
   return (
@@ -27,7 +51,7 @@ function FilterDropdown({ onRegionFilter, onLanguageFilter }) {
         >
           {regions.map((region) => (
             <option key={region} value={region}>
-              {region}
+              {region === 'All' ? 'Filter by Region' : region}
             </option>
           ))}
         </select>
@@ -40,7 +64,7 @@ function FilterDropdown({ onRegionFilter, onLanguageFilter }) {
         >
           {languages.map((language) => (
             <option key={language} value={language}>
-              {language}
+              {language === 'All' ? 'Filter by Language' : language}
             </option>
           ))}
         </select>

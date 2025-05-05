@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useState } from 'react';
+import '../App.css';
 
 function CountryList({ countries, loading, favorites, toggleFavorite, compareList, toggleCompare }) {
   const [currentPage, setCurrentPage] = useState(1);
@@ -25,45 +26,65 @@ function CountryList({ countries, loading, favorites, toggleFavorite, compareLis
           <p className="text-center text-gray-600 col-span-3">No countries found.</p>
         ) : (
           currentCountries.map((country) => (
-            <div key={country.cca2} className="bg-white rounded-lg shadow-md overflow-hidden">
-              <img
-                src={country.flags.png}
-                alt={`Flag of ${country.name.common}`}
-                className="w-full h-24 object-cover"
-              />
-              <div className="p-4">
-                <h5 className="text-lg font-semibold text-gray-800">{country.name.common}</h5>
-                <p className="text-gray-600">
-                  <strong>Capital:</strong> {country.capital?.[0] || 'N/A'}<br />
-                  <strong>Population:</strong> {country.population.toLocaleString()}<br />
-                  <strong>Region:</strong> {country.region}<br />
-                  <strong>Languages:</strong>{' '}
-                  {Object.values(country.languages || {}).join(', ') || 'N/A'}
-                </p>
-                <div className="mt-3 flex space-x-2">
-                  <Link to={`/country/${country.cca2}`} className="px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors">
+            <div 
+              key={country.cca2} 
+              className="bg-white rounded-xl shadow-lg overflow-hidden border border-blue-100 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
+            >
+              <div className="relative h-40 overflow-hidden">
+                <img
+                  src={country.flags.png}
+                  alt={`Flag of ${country.name.common}`}
+                  className="w-full h-full object-cover transform hover:scale-110 transition-transform duration-500"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
+                <h5 className="absolute bottom-0 left-0 right-0 p-4 text-xl font-bold text-white">
+                  {country.name.common}
+                </h5>
+              </div>
+              <div className="p-6">
+                <div className="space-y-2 mb-4">
+                  <div className="flex items-center text-gray-700">
+                    <span className="w-24 font-semibold">Capital:</span>
+                    <span>{country.capital?.[0] || 'N/A'}</span>
+                  </div>
+                  
+                  <div className="flex items-center text-gray-700">
+                    <span className="w-24 font-semibold">Region:</span>
+                    <span>{country.region}</span>
+                  </div>
+                  
+                  <div className="flex items-center text-gray-700">
+                    <span className="w-24 font-semibold">Languages:</span>
+                    <span className="line-clamp-1">{Object.values(country.languages || {}).join(', ') || 'N/A'}</span>
+                  </div>
+                </div>
+                <div className="flex flex-wrap gap-1.5 mt-4">
+                  <Link 
+                    to={`/country/${country.cca2}`} 
+                    className="flex-1 px-3 py-1.5 bg-blue-500 text-white text-sm text-center rounded-md hover:bg-blue-600 transition-all duration-300 ease-in-out transform hover:-translate-y-0.5"
+                  >
                     View Details
                   </Link>
                   <button
                     onClick={() => toggleFavorite(country)}
-                    className={`px-3 py-1 rounded-md transition-colors ${
+                    className={`flex-1 px-3 py-1.5 text-sm rounded-md transition-all duration-300 ease-in-out transform hover:-translate-y-0.5 ${
                       favorites.some((fav) => fav.cca2 === country.cca2)
-                        ? 'bg-red-500 text-white hover:bg-red-600'
-                        : 'bg-red-100 text-red-700 hover:bg-red-200'
+                        ? 'bg-rose-100 text-rose-700 hover:bg-rose-200'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                     }`}
                   >
-                    {favorites.some((fav) => fav.cca2 === country.cca2) ? 'Unfavorite' : 'Favorite'}
+                    {favorites.some((fav) => fav.cca2 === country.cca2) ? '★' : '☆'}
                   </button>
                   <button
                     onClick={() => toggleCompare(country)}
-                    className={`px-3 py-1 rounded-md transition-colors ${
+                    className={`flex-1 px-3 py-1.5 text-sm rounded-md transition-all duration-300 ease-in-out transform hover:-translate-y-0.5 ${
                       compareList.some((c) => c.cca2 === country.cca2)
-                        ? 'bg-yellow-500 text-white hover:bg-yellow-600'
-                        : 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200'
+                        ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                     } ${compareList.length >= 3 && !compareList.some((c) => c.cca2 === country.cca2) ? 'opacity-50 cursor-not-allowed' : ''}`}
                     disabled={compareList.length >= 3 && !compareList.some((c) => c.cca2 === country.cca2)}
                   >
-                    {compareList.some((c) => c.cca2 === country.cca2) ? 'Remove from Compare' : 'Compare'}
+                    {compareList.some((c) => c.cca2 === country.cca2) ? '✓' : '+'}
                   </button>
                 </div>
               </div>
@@ -71,12 +92,17 @@ function CountryList({ countries, loading, favorites, toggleFavorite, compareLis
           ))
         )}
       </div>
+      
       {totalCountries > countriesPerPage && (
-        <nav aria-label="Country list pagination" className="mt-6 flex justify-center">
-          <ul className="flex space-x-2">
+        <nav aria-label="Country list pagination" className="mt-8 flex justify-center">
+          <ul className="flex flex-wrap gap-2 justify-center">
             <li>
               <button
-                className={`px-4 py-2 rounded-md ${currentPage === 1 ? 'bg-gray-200 text-gray-500 cursor-not-allowed' : 'bg-pastelBlue text-white hover:bg-pastelTurquoise'}`}
+                className={`px-4 py-2 rounded-lg font-medium ${
+                  currentPage === 1 
+                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                    : 'bg-blue-500 text-white hover:bg-blue-600'
+                }`}
                 onClick={() => handlePageChange(currentPage - 1)}
                 disabled={currentPage === 1}
               >
@@ -86,7 +112,11 @@ function CountryList({ countries, loading, favorites, toggleFavorite, compareLis
             {[...Array(totalPages)].map((_, index) => (
               <li key={index + 1}>
                 <button
-                  className={`px-4 py-2 rounded-md ${currentPage === index + 1 ? 'bg-pastelPink text-white' : 'bg-pastelAliceBlue text-gray-700 hover:bg-pastelTurquoise'}`}
+                  className={`px-4 py-2 rounded-lg font-medium ${
+                    currentPage === index + 1 
+                      ? 'bg-blue-100 text-blue-700 border-2 border-blue-500' 
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
                   onClick={() => handlePageChange(index + 1)}
                 >
                   {index + 1}
@@ -95,7 +125,11 @@ function CountryList({ countries, loading, favorites, toggleFavorite, compareLis
             ))}
             <li>
               <button
-                className={`px-4 py-2 rounded-md ${currentPage === totalPages ? 'bg-gray-200 text-gray-500 cursor-not-allowed' : 'bg-pastelBlue text-white hover:bg-pastelTurquoise'}`}
+                className={`px-4 py-2 rounded-lg font-medium ${
+                  currentPage === totalPages 
+                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                    : 'bg-blue-500 text-white hover:bg-blue-600'
+                }`}
                 onClick={() => handlePageChange(currentPage + 1)}
                 disabled={currentPage === totalPages}
               >
