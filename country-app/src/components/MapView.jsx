@@ -1,115 +1,162 @@
-// import { MapContainer, TileLayer, useMap } from 'react-leaflet';
-// import { Link } from 'react-router-dom';
-// import L from 'leaflet';
-// import 'leaflet/dist/leaflet.css';
-// import 'leaflet.markercluster/dist/MarkerCluster.css';
-// import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
-// import { useEffect } from 'react';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import MarkerClusterGroup from 'react-leaflet-cluster';
+import { Icon } from 'leaflet';
+import { Link } from 'react-router-dom';
+import { useEffect, useState, useCallback } from 'react';
 
-// delete L.Icon.Default.prototype._getIconUrl;
-// L.Icon.Default.mergeOptions({
-//   iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-//   iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-//   shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-// });
+const customIcon = new Icon({
+  iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+  shadowSize: [41, 41]
+});
 
-// function ClusterLayer({ countries }) {
-//   const map = useMap();
+// Add this new component for handling map updates
+function MapUpdater({ selectedCountry }) {
+  const map = useMap();
 
-//   useEffect(() => {
-//     const markerClusterGroup = L.markerClusterGroup();
+  useEffect(() => {
+    if (selectedCountry && selectedCountry.latlng) {
+      map.setView([selectedCountry.latlng[0], selectedCountry.latlng[1]], 5, {
+        animate: true,
+        duration: 1
+      });
+    }
+  }, [selectedCountry, map]);
 
-//     countries.forEach((country) => {
-//       if (country.latlng) {
-//         const marker = L.marker(country.latlng);
-//         marker.bindPopup(`<a href="/country/${country.cca2}">${country.name.common}</a>`);
-//         markerClusterGroup.addLayer(marker);
-//       }
-//     });
+  return null;
+}
 
-//     map.addLayer(markerClusterGroup);
+function MapView({ countries }) {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCountry, setSelectedCountry] = useState(null);
 
-//     return () => {
-//       map.removeLayer(markerClusterGroup);
-//     };
-//   }, [map, countries]);
+  const handleSearch = useCallback((e) => {
+    const query = e.target.value.toLowerCase();
+    setSearchQuery(query);
 
-//   return null;
-// }
+    if (query) {
+      const found = countries.find(country => 
+        country.name.common.toLowerCase().includes(query)
+      );
+      setSelectedCountry(found || null);
+    } else {
+      setSelectedCountry(null);
+    }
+  }, [countries]);
 
-// function MapView({ countries }) {
-//   return (
-//     <div className="mb-6">
-//       <MapContainer center={[20, 0]} zoom={2} className="h-96 w-full rounded-lg shadow-md">
-//         <TileLayer
-//           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-//           attribution='© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-//         />
-//         <ClusterLayer countries={countries} />
-//       </MapContainer>
-//     </div>
-//   );
-// }
+  useEffect(() => {
+    // Debug which countries are missing coordinates
+    countries.forEach(country => {
+      if (!country.latlng || country.latlng.length !== 2) {
+        console.log(`Missing coordinates for: ${country.name.common}`);
+      }
+    });
+  }, [countries]);
 
-// export default MapView;
+  return (
+    <div className="flex flex-col gap-4">
+      {/* Add search input above the map */}
+      <div className="relative w-1/3 mb-2"> {/* Added w-1/3 for smaller width */}
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={handleSearch}
+          placeholder="Search for a country..."
+          className="w-full p-2 pl-8 text-sm border border-blue-200 rounded-lg 
+          focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-500 
+          bg-blue-50 text-gray-700 placeholder-gray-500
+          transition-all duration-200"
+        />
+        <div className="absolute inset-y-0 left-2 flex items-center pointer-events-none">
+          <svg className="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+        </div>
+      </div>
 
-import { useEffect } from 'react';
-     import { APIProvider, Map, AdvancedMarker, useMap } from '@vis.gl/react-google-maps';
-     import { Link } from 'react-router-dom';
-     import { MarkerClusterer } from '@googlemaps/markerclusterer';
+      <div className="h-[800px] w-full">
+        <MapContainer 
+          center={[20, 0]} 
+          zoom={2} 
+          className="h-full w-full rounded-xl shadow-lg"
+          minZoom={2}
+          maxZoom={18}
+          scrollWheelZoom={true}
+        >
+          <MapUpdater selectedCountry={selectedCountry} />
+          <TileLayer
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            language="en" // Try to force English language
+          />
+          <MarkerClusterGroup
+            chunkedLoading
+            maxClusterRadius={50}
+            spiderfyOnMaxZoom={true}
+            showCoverageOnHover={false}
+            iconCreateFunction={(cluster) => {
+              const count = cluster.getChildCount();
+              let size = 'small';
+              let className = 'marker-cluster marker-cluster-';
+              
+              if (count > 100) {
+                size = 'large';
+                className += 'large';
+              } else if (count > 10) {
+                size = 'medium';
+                className += 'medium';
+              } else {
+                className += 'small';
+              }
+              
+              return L.divIcon({
+                html: `<div><span>${count}</span></div>`,
+                className: className,
+                iconSize: L.point(40, 40)
+              });
+            }}
+          >
+            {countries.map((country) => {
+              if (country.latlng && country.latlng.length === 2) {
+                return (
+                  <Marker 
+                    key={country.cca2}
+                    position={[country.latlng[0], country.latlng[1]]}
+                    icon={customIcon}
+                  >
+                    <Popup>
+                      <div className={`flex flex-col items-center p-2 ${
+                        selectedCountry?.cca2 === country.cca2 ? 'ring-2 ring-blue-500' : ''
+                      }`}>
+                        <img 
+                          src={country.flags.png} 
+                          alt={`${country.name.common} flag`}
+                          className="w-24 h-16 object-cover mb-2 rounded shadow-sm"
+                        />
+                        <h3 className="font-bold text-lg mb-1">{country.name.common}</h3>
+                        <p className="text-sm text-gray-600">Capital: {country.capital?.[0] || 'N/A'}</p>
+                        <p className="text-sm text-gray-600">Population: {country.population.toLocaleString()}</p>
+                        <Link 
+                          to={`/country/${country.cca2}`}
+                          className="mt-2 px-4 py-1 bg-blue-500 text-white text-sm rounded hover:bg-blue-600 transition-colors"
+                        >
+                          View Details
+                        </Link>
+                      </div>
+                    </Popup>
+                  </Marker>
+                );
+              }
+              return null;
+            })}
+          </MarkerClusterGroup>
+        </MapContainer>
+      </div>
+    </div>
+  );
+}
 
-     function ClusterLayer({ countries }) {
-       const map = useMap();
-
-       useEffect(() => {
-         if (!map || !countries) return;
-
-         const markers = countries
-           .filter(country => country.latlng)
-           .map(country => {
-             const marker = new google.maps.Marker({
-               position: { lat: country.latlng[0], lng: country.latlng[1] },
-               title: country.name.common,
-             });
-
-             const infoWindow = new google.maps.InfoWindow({
-               content: `<a href="/country/${country.cca2}">${country.name.common}</a>`,
-             });
-
-             marker.addListener('click', () => {
-               infoWindow.open(map, marker);
-             });
-
-             return marker;
-           });
-
-         const clusterer = new MarkerClusterer({ map, markers });
-
-         return () => {
-           clusterer.clearMarkers();
-           markers.forEach(marker => marker.setMap(null));
-         };
-       }, [map, countries]);
-
-       return null;
-     }
-
-     function MapView({ countries }) {
-       return (
-         <div className="mb-6">
-           <APIProvider apiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}>
-             <Map
-               defaultCenter={{ lat: 20, lng: 0 }}
-               defaultZoom={2}
-               style={{ height: '384px', width: '100%' }}
-               mapId="country-explorer-map"
-               className="rounded-lg shadow-md"
-             >
-               <ClusterLayer countries={countries} />
-             </Map>
-           </APIProvider>
-         </div>
-       );
-     }
-
-     export default MapView;
+export default MapView;

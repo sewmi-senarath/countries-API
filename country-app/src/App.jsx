@@ -1,3 +1,4 @@
+import 'leaflet/dist/leaflet.css';
 import { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import axios from 'axios';
