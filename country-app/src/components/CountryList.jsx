@@ -84,7 +84,7 @@ function CountryList({ countries, loading, favorites, toggleFavorite, compareLis
                     } ${compareList.length >= 3 && !compareList.some((c) => c.cca2 === country.cca2) ? 'opacity-50 cursor-not-allowed' : ''}`}
                     disabled={compareList.length >= 3 && !compareList.some((c) => c.cca2 === country.cca2)}
                   >
-                    {compareList.some((c) => c.cca2 === country.cca2) ? '✓' : '+'}
+                    {compareList.some((c) => c.cca2 === country.cca2) ? '✓' : 'compare +'}
                   </button>
                 </div>
               </div>
