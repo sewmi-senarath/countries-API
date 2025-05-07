@@ -14,7 +14,7 @@ function SearchBar({ onSearch, onViewChange, isMapView }) {
   };
 
   return (
-    <div className="w-full relative flex gap-2 items-center">
+    <div className="w-full relative flex gap-2 items-center ">
       <div className="flex-1 relative">
         <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
           <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -26,7 +26,7 @@ function SearchBar({ onSearch, onViewChange, isMapView }) {
           value={searchText}
           onChange={handleSearch}
           placeholder="Search for a country..."
-          className="w-full pl-10 pr-4 py-3 text-lg border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-500 transition-all duration-200"
+          className="w-full pl-10 pr-4 py-3 text-lg border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-500 transition-all duration-200 card-theme"
         />
       </div>
       <button

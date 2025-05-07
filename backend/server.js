@@ -20,8 +20,10 @@ requiredEnvVars.forEach((varName) => {
 
 // Middleware
 app.use(cors({
+  origin: 'http://localhost:5173',
   credentials: true,
-  origin: process.env.FRONTEND_URL,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(express.json());
 app.use(cookieParser());

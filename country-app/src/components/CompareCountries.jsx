@@ -47,7 +47,7 @@ function CompareCountries({ compareList, toggleCompare }) {
           <tbody>
             {/* Basic Information */}
             <tr className="border-b border-gray-100">
-              <td className="p-4 text-gray-600 font-medium">Capital</td>
+              <td className="p-4 text-gray-600 font-small">Capital</td>
               {compareList.map(country => (
                 <td key={country.cca2} className="p-4 text-center text-gray-800">
                   {country.capital?.[0] || 'N/A'}
@@ -57,7 +57,7 @@ function CompareCountries({ compareList, toggleCompare }) {
 
             {/* Population with Visual Bar */}
             <tr className="border-b border-gray-100">
-              <td className="p-4 text-gray-600 font-medium">Population</td>
+              <td className="p-4 text-gray-600 font-small">Population</td>
               {compareList.map((country, index) => (
                 <td key={country.cca2} className="p-4 text-center">
                   <div className="flex flex-col items-center">
@@ -75,7 +75,7 @@ function CompareCountries({ compareList, toggleCompare }) {
 
             {/* Region */}
             <tr className="border-b border-gray-100">
-              <td className="p-4 text-gray-600 font-medium">Region</td>
+              <td className="p-4 text-gray-600 font-small">Region</td>
               {compareList.map(country => (
                 <td key={country.cca2} className="p-4 text-center text-gray-800">
                   {country.region}
@@ -86,7 +86,7 @@ function CompareCountries({ compareList, toggleCompare }) {
 
             {/* Languages */}
             <tr className="border-b border-gray-100">
-              <td className="p-4 text-gray-600 font-medium">Languages</td>
+              <td className="p-4 text-gray-600 font-small">Languages</td>
               {compareList.map(country => (
                 <td key={country.cca2} className="p-4 text-center text-gray-800">
                   {Object.values(country.languages || {}).join(', ') || 'N/A'}
@@ -96,7 +96,7 @@ function CompareCountries({ compareList, toggleCompare }) {
 
             {/* Actions Row */}
             <tr>
-              <td className="p-4 text-gray-600 font-medium">Actions</td>
+              <td className="p-4 text-gray-600 font-small">Actions</td>
               {compareList.map(country => (
                 <td key={country.cca2} className="p-4 text-center">
                   <button
