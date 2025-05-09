@@ -46,7 +46,7 @@ describe('CountryList Component', () => {
   it('should display correct country information', () => {
     renderCountryList();
     
-    // More reliable way to find country cards
+    // Verify country cards with role="article"
     const countryCards = screen.getAllByRole('article');
     expect(countryCards.length).toBe(2);
     

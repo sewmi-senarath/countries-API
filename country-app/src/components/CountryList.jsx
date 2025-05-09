@@ -96,6 +96,7 @@ function CountryList({ countries, loading, favorites, toggleFavorite, compareLis
           currentCountries.map((country) => (
             <div 
               key={country.cca2}
+              role="article" // Added role="article" to make it accessible
               className="relative group"
               onMouseEnter={() => setIsHovering(country.cca2)}
               onMouseLeave={() => setIsHovering(null)}
