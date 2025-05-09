@@ -5,12 +5,32 @@ import '../App.css';
 function CountryList({ countries, loading, favorites, toggleFavorite, compareList, toggleCompare }) {
   const [currentPage, setCurrentPage] = useState(1);
   const [isHovering, setIsHovering] = useState(null);
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
   const countriesPerPage = 12;
 
+  // Sort countries
+  const sortedCountries = [...countries].sort((a, b) => {
+    if (!sortConfig.key) return 0;
+    
+    if (sortConfig.key === 'population') {
+      return sortConfig.direction === 'asc' 
+        ? a.population - b.population 
+        : b.population - a.population;
+    } else {
+      if (a[sortConfig.key] < b[sortConfig.key]) {
+        return sortConfig.direction === 'asc' ? -1 : 1;
+      }
+      if (a[sortConfig.key] > b[sortConfig.key]) {
+        return sortConfig.direction === 'asc' ? 1 : -1;
+      }
+      return 0;
+    }
+  });
+
   // Calculate pagination
-  const totalCountries = countries.length;
+  const totalCountries = sortedCountries.length;
   const totalPages = Math.ceil(totalCountries / countriesPerPage);
-  const currentCountries = countries.slice(
+  const currentCountries = sortedCountries.slice(
     (currentPage - 1) * countriesPerPage,
     currentPage * countriesPerPage
   );
@@ -40,6 +60,15 @@ function CountryList({ countries, loading, favorites, toggleFavorite, compareLis
     }
     
     return pages;
+  };
+
+  const requestSort = (key) => {
+    let direction = 'asc';
+    if (sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setSortConfig({ key, direction });
+    setCurrentPage(1); // Reset to first page when sorting changes
   };
 
   if (loading) return (
@@ -96,7 +125,7 @@ function CountryList({ countries, loading, favorites, toggleFavorite, compareLis
           currentCountries.map((country) => (
             <div 
               key={country.cca2}
-              role="article" // Added role="article" to make it accessible
+              role="article"
               className="relative group"
               onMouseEnter={() => setIsHovering(country.cca2)}
               onMouseLeave={() => setIsHovering(null)}
@@ -109,6 +138,7 @@ function CountryList({ countries, loading, favorites, toggleFavorite, compareLis
                     src={country.flags.svg || country.flags.png}
                     alt={`Flag of ${country.name.common}`}
                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                    loading="lazy"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
                   
@@ -131,12 +161,20 @@ function CountryList({ countries, loading, favorites, toggleFavorite, compareLis
                       }}
                       className={`p-2 rounded-full backdrop-blur-sm transition-all ${
                         favorites.some(f => f.cca2 === country.cca2)
-                          ? 'bg-red-500/90 text-white shadow-lg'
-                          : 'bg-white/80 text-gray-700 hover:bg-white'
+                          ? 'bg-red-500/90 text-white shadow-lg hover:scale-110'
+                          : 'bg-white/80 text-gray-700 hover:bg-white hover:scale-110'
                       }`}
                       aria-label={favorites.some(f => f.cca2 === country.cca2) ? 'Remove from favorites' : 'Add to favorites'}
                     >
-                      {favorites.some(f => f.cca2 === country.cca2) ? '❤️' : '🤍'}
+                      {favorites.some(f => f.cca2 === country.cca2) ? (
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" />
+                        </svg>
+                      ) : (
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                        </svg>
+                      )}
                     </button>
                   </div>
                 </div>
@@ -149,7 +187,12 @@ function CountryList({ countries, loading, favorites, toggleFavorite, compareLis
                       <p className="font-medium text-gray-800">{country.region}</p>
                     </div>
                     <div className="space-y-1">
-                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Population</p>
+                      <div className="flex items-center gap-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-500" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                        </svg>
+                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Population</p>
+                      </div>
                       <p className="font-medium text-gray-800">{country.population.toLocaleString()}</p>
                     </div>
                     <div className="space-y-1 col-span-2">
@@ -164,7 +207,7 @@ function CountryList({ countries, loading, favorites, toggleFavorite, compareLis
                   <div className="flex gap-2">
                     <Link
                       to={`/country/${country.cca2}`}
-                      className="flex-1 px-3 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white text-sm font-medium rounded-lg hover:shadow-md transition-all flex items-center justify-center gap-1"
+                      className="flex-1 px-3 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white text-sm font-medium rounded-lg hover:shadow-md transition-all flex items-center justify-center gap-1 hover:scale-[1.02]"
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                         <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM7 9a1 1 0 100-2 1 1 0 000 2zm7-1a1 1 0 11-2 0 1 1 0 012 0zm-.464 5.535a1 1 0 10-1.415-1.414 3 3 0 01-4.242 0 1 1 0 00-1.415 1.414 5 5 0 007.072 0z" clipRule="evenodd" />
@@ -174,7 +217,7 @@ function CountryList({ countries, loading, favorites, toggleFavorite, compareLis
                     <button
                       onClick={() => toggleCompare(country)}
                       disabled={compareList.length >= 3 && !compareList.some(c => c.cca2 === country.cca2)}
-                      className={`px-3 py-2 text-sm font-medium rounded-lg transition-all flex items-center justify-center gap-1 ${
+                      className={`px-3 py-2 text-sm font-medium rounded-lg transition-all flex items-center justify-center gap-1 hover:scale-[1.02] ${
                         compareList.some(c => c.cca2 === country.cca2)
                           ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'
                           : compareList.length >= 3
@@ -229,7 +272,7 @@ function CountryList({ countries, loading, favorites, toggleFavorite, compareLis
                   className={`px-4 py-2 rounded-lg flex items-center gap-1 transition-all ${
                     currentPage === 1
                       ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                      : 'bg-white text-gray-700 hover:bg-gray-50 shadow-sm border border-gray-200'
+                      : 'bg-white text-gray-700 hover:bg-gray-50 shadow-sm border border-gray-200 hover:scale-105'
                   }`}
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -246,7 +289,7 @@ function CountryList({ countries, loading, favorites, toggleFavorite, compareLis
                   ) : (
                     <button
                       onClick={() => handlePageChange(page)}
-                      className={`px-4 py-2 rounded-lg transition-all ${
+                      className={`px-4 py-2 rounded-lg transition-all hover:scale-105 ${
                         currentPage === page
                           ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-lg'
                           : 'bg-white text-gray-700 hover:bg-gray-50 shadow-sm border border-gray-200'
@@ -265,7 +308,7 @@ function CountryList({ countries, loading, favorites, toggleFavorite, compareLis
                   className={`px-4 py-2 rounded-lg flex items-center gap-1 transition-all ${
                     currentPage === totalPages
                       ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                      : 'bg-white text-gray-700 hover:bg-gray-50 shadow-sm border border-gray-200'
+                      : 'bg-white text-gray-700 hover:bg-gray-50 shadow-sm border border-gray-200 hover:scale-105'
                   }`}
                 >
                   Next
@@ -278,20 +321,6 @@ function CountryList({ countries, loading, favorites, toggleFavorite, compareLis
           </nav>
         </div>
       )}
-
-      {/* Add to your CSS */}
-      <style jsx global>{`
-        @keyframes float {
-          0%, 100% { transform: translateY(0) rotate(0deg); }
-          50% { transform: translateY(-20px) rotate(5deg); }
-        }
-        .animate-float {
-          animation: float linear infinite;
-        }
-        .animation-delay-100 {
-          animation-delay: 100ms;
-        }
-      `}</style>
     </div>
   );
 }
